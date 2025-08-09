@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Advanced_shell / summaryData-0x03
 # Generate a CSV report summarizing data for multiple Pokémon
-# Use awk to calculate averages for height and weight.
+# Use sed for capitalization and awk for calculating averages
 
 set -Eeuo pipefail
 
@@ -17,8 +17,8 @@ pokemon_count=0
 
 # Loop through all JSON files in the pokemon_data directory
 for json_file in "$INPUT_DIR"/*.json; do
-  # Extract the name, height, and weight for each Pokémon
-  name=$(jq -r '.name' "$json_file" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+  # Extract the name, height, and weight for each Pokémon using jq
+  name=$(jq -r '.name' "$json_file" | sed 's/\b\(.\)/\U\1/g')
   height=$(jq -r '.height' "$json_file" | awk '{printf "%.1f", $1/10}')
   weight=$(jq -r '.weight' "$json_file" | awk '{printf "%.1f", $1/10}')
 
