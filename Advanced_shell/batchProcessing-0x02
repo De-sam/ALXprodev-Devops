@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Advanced_shell / batchProcessing-0x02
+# Fetch data for multiple Pokémon and store in separate JSON files
+
+set -Eeuo pipefail
+
+# List of Pokémon to fetch data for
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Folder where we will store the Pokémon data
+OUTPUT_DIR="pokemon_data"
+mkdir -p "$OUTPUT_DIR"
+
+# Function to fetch data for a Pokémon and save it to a file
+fetch_data() {
+  local pokemon="$1"
+  local file="$OUTPUT_DIR/${pokemon}.json"
+  
+  echo "Fetching data for ${pokemon}..."
+  
+  # Fetch the data from the API and save to a file
+  if curl -sS "https://pokeapi.co/api/v2/pokemon/${pokemon}" -o "$file"; then
+    echo "Saved data to ${file} ✅"
+  else
+    echo "Failed to fetch data for ${pokemon} ❌"
+  fi
+}
+
+# Loop through the list of Pokémon and fetch their data
+for pokemon in "${POKEMON_LIST[@]}"; do
+  fetch_data "$pokemon"
+  
+  # To handle rate-limiting: Add a delay of 2 seconds between requests
+  sleep 2
+done
