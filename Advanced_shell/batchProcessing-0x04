@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Advanced_shell / batchProcessing-0x05
+# Advanced_shell / batchProcessing-0x04
 # Fetch data for multiple Pokémon in parallel and store in separate JSON files
-# Implement retry logic and error handling
+# Implement retry logic and error handling with job control
 
 set -Eeuo pipefail
 
@@ -49,13 +49,16 @@ fetch_data() {
   fi
 }
 
-# Loop through the list of Pokémon and fetch their data in parallel
+# Loop through the list of Pokémon and fetch their data in parallel using jobs
 for pokemon in "${POKEMON_LIST[@]}"; do
   fetch_data "$pokemon" &  # Run the fetch_data function in the background
 done
 
-# Wait for all background processes to finish
+# Wait for all background processes to complete
 wait
+
+# Job control: kill any remaining jobs if they exist (for cleanup)
+jobs -p | xargs kill 2>/dev/null
 
 # Final message
 echo "All fetch attempts completed. Check the error log for failed requests if any."
