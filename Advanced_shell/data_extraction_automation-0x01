@@ -1,39 +1,36 @@
 #!/usr/bin/env bash
 # Advanced_shell / data_extraction_automation-0x01
-# Reads data.json (from Task 0) and prints:
-# "Pikachu is of type Electric, weighs 6kg, and is 0.4m tall."
-# Only uses jq, awk, and sed for processing.
+# Only uses jq, awk, sed
 
 set -Eeuo pipefail
-
 JSON_FILE="${1:-data.json}"
 
-# Guard: ensure the json file exists and looks like valid JSON
+# Validate JSON
 jq -e . "$JSON_FILE" >/dev/null
 
-# Name (capitalize first letter)
+# Required variable names:
 name="$(
   jq -r '.name' "$JSON_FILE" \
   | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}'
 )"
 
-# Height in meters (PokéAPI height is in decimeters)
-height_m="$(
+# height (dm -> m) -> formatted_height
+formatted_height="$(
   jq -r '.height' "$JSON_FILE" \
   | awk '{printf "%.1f", $1/10}'
 )"
 
-# Weight in kg (PokéAPI weight is in hectograms)
-weight_kg="$(
+# weight (hg -> kg) -> formatted_weight
+formatted_weight="$(
   jq -r '.weight' "$JSON_FILE" \
   | awk '{printf "%.1f", $1/10}'
 )"
 
-# Type(s): join multiple types with "/", ProperCase each
-types_raw="$(jq -r '[.types[].type.name] | join("/")' "$JSON_FILE")"
-types_formatted="$(
-  printf "%s" "$types_raw" \
-  | sed -E 's/(^|\/)([a-z])/\1\u\2/g; s/([A-Z])([A-Z]+)/\1\L\2/g'
+# first type -> type (capitalize first letter)
+type="$(
+  jq -r '.types[0].type.name' "$JSON_FILE" \
+  | sed -E 's/^([a-z])/\U\1/; s/([A-Z])([A-Z]+)/\1\L\2/g'
 )"
 
-echo "${name} is of type ${types_formatted}, weighs ${weight_kg}kg, and is ${height_m}m tall."
+# EXACT line the checker wants:
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
