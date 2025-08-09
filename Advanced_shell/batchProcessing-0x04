@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Advanced_shell / batchProcessing-0x05
+# Fetch data for multiple Pokémon in parallel and store in separate JSON files
+# Implement retry logic and error handling
+
+set -Eeuo pipefail
+
+# List of Pokémon to fetch data for
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Folder where we will store the Pokémon data
+OUTPUT_DIR="pokemon_data"
+mkdir -p "$OUTPUT_DIR"
+
+# Error log file
+ERROR_LOG="errors.txt"
+> "$ERROR_LOG"  # Clear any previous error logs
+
+# Max retry attempts
+MAX_RETRIES=3
+
+# Function to fetch data for a Pokémon and save it to a file
+fetch_data() {
+  local pokemon="$1"
+  local file="$OUTPUT_DIR/${pokemon}.json"
+  local attempt=0
+  local success=false
+  
+  echo "Fetching data for ${pokemon}..."
+  
+  while [[ $attempt -lt $MAX_RETRIES ]]; do
+    # Increment attempt
+    attempt=$((attempt + 1))
+    
+    # Fetch the data from the API and save to a file
+    if curl -sS "https://pokeapi.co/api/v2/pokemon/${pokemon}" -o "$file"; then
+      echo "Saved data to ${file} ✅"
+      success=true
+      break
+    else
+      echo "Attempt $attempt failed for ${pokemon}. Retrying..."
+      sleep 2  # Wait before retrying
+    fi
+  done
+  
+  if [[ "$success" == false ]]; then
+    echo "[ERROR] Failed to fetch data for ${pokemon} after ${MAX_RETRIES} attempts" >> "$ERROR_LOG"
+    echo "Error logged to $ERROR_LOG"
+  fi
+}
+
+# Loop through the list of Pokémon and fetch their data in parallel
+for pokemon in "${POKEMON_LIST[@]}"; do
+  fetch_data "$pokemon" &  # Run the fetch_data function in the background
+done
+
+# Wait for all background processes to finish
+wait
+
+# Final message
+echo "All fetch attempts completed. Check the error log for failed requests if any."
